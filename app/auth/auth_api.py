@@ -78,7 +78,7 @@ def register_api():
             'page': referrer or url_for('main.index')
         }), 200
 
-
+# 判断是否登录
 @auth.route('/isLogin', methods=['GET'])
 def isLogin():
     if session.get('login', None) == True:
@@ -95,13 +95,13 @@ def isLogin():
     else:
         return jsonify({'is_login': False}), 200
 
-
+# 注销
 @auth.route('/logout', methods=['GET'])
 def logout():
     session.clear()
     return jsonify({'page': request.referrer or url_for('main.index')}), 200
 
-
+# 图书管理员登录
 @auth.route('/adminLogin', methods=['POST'])
 def admin_login():
     request_data = request.get_json()
@@ -118,14 +118,14 @@ def admin_login():
     else:
         return jsonify({'login_statu': False, 'reason':'用户名或密码错误'}), 401
 
-
+# 判断图书管理员是否登录
 @auth.route('/adminLogout', methods=['GET'])
 def admin_logout():
     session['admin_username'] = None
     session['isAdmin'] = None
     return jsonify({'page': request.referrer or url_for('main.index')}), 200        
 
-
+# 进入图书管理员界面需要进行判断，如果不是图书管理员不能进
 @auth.route('/adminInfo', methods=['GET'])
 def get_admin_info():
     if session['isAdmin'] == True:
@@ -133,7 +133,7 @@ def get_admin_info():
     else:
         return jsonify({'reason':'Not admin'}), 403
 
-
+# 获取个人信息
 @auth.route('/personalInfo', methods=['GET'])
 def personal_info():
     user = db.session.query(User).filter_by(user_id=session.get('id', None)).first()
@@ -152,7 +152,7 @@ def personal_info():
     }
     return jsonify(user_json), 200
 
-
+# 修改个人信息
 @auth.route('/personalInfo', methods=['POST'])
 def edit_personal_info():
     user = db.session.query(User).filter_by(user_id=session.get('id', None)).first()
@@ -185,7 +185,7 @@ def edit_personal_info():
     else:
         return jsonify({'edit_statu':True}), 201
 
-
+# 个人借阅信息
 @auth.route('/lendingHistory', methods=['GET'])
 def lending_history():
     user = db.session.query(User).filter_by(user_id=session.get('id', None)).first()
@@ -219,7 +219,7 @@ def lending_history():
     returned_json['lend_info'] = lendinfo_list
     return jsonify(returned_json), 200
 
-
+# 个人在线续借
 @auth.route('/renew/<int:lending_info_id>', methods=['GET'])
 def renew_borrow(lending_info_id):
     lending_info = db.session.query(LendingInfo).filter_by(lending_info_id=lending_info_id).first()
@@ -265,7 +265,7 @@ def get_history_comments():
     returned_json['comments'] = comments_list
     return jsonify(returned_json), 200
 
-
+# 添加公告
 @auth.route('/addAnnouncement', methods=['POST'])
 def add_announcement():
     try:
@@ -281,7 +281,7 @@ def add_announcement():
     return jsonify({'created': True, 'announcement': 
             {'title': new_announcement.title, 'content':new_announcement.content}}), 201
 
-
+# 获取所有公告
 @auth.route('/getAnnouncement', methods=['GET'])
 def get_announcement():
     announcements = db.session.query(Announcement).order_by(desc(Announcement.time)).limit(5).all()
@@ -296,7 +296,7 @@ def get_announcement():
     returned_json['announcements'] = announcements_list
     return jsonify(returned_json), 200
 
-
+# 根据id号获取公告信息
 @auth.route('/getAnnouncement/<int:ann_id>', methods=['GET'])
 def get_announcement_by_id(ann_id):
     ann = db.session.query(Announcement).filter_by(announcement_id=ann_id).first()
@@ -305,7 +305,7 @@ def get_announcement_by_id(ann_id):
     return jsonify({'query_statu': True, 'title':ann.title,
                     'content': ann.content, 'time': ann.time}), 200
 
-
+#获取所有公告
 @auth.route('/getAllAnnouncement', methods=['GET'])
 def get_all_announcement():
     announcements = db.session.query(Announcement).order_by(desc(Announcement.time)).all()
@@ -320,7 +320,7 @@ def get_all_announcement():
     returned_json['announcements'] = announcements_list
     return jsonify(returned_json), 200
 
-
+# 修改公告
 @auth.route('/editAnnouncement', methods=['POST'])
 def edit_announcement():
     try:
@@ -343,7 +343,7 @@ def edit_announcement():
     else:
         return jsonify({'edit_statu': True}), 201        
     
-
+# 删除公告
 @auth.route('/deleteAnnouncement/<int:ann_id>', methods=['GET'])
 def delete_announcement(ann_id):
     ann = db.session.query(Announcement).filter_by(announcement_id=ann_id).first()
@@ -357,7 +357,7 @@ def delete_announcement(ann_id):
         return jsonify({'delete_statu': False, 'reason':'服务器发生错误，请稍后再试'}), 500
     return jsonify({'delete_statu': True}), 200
 
-
+# 修改个人信息的等级时，用该接口获取所有等级
 @auth.route('/getLevels', methods=['GET'])
 def get_all_levels():
     levels = db.session.query(Level).all()
@@ -367,7 +367,7 @@ def get_all_levels():
         returned_dict['levels'].append({'name': level.name, 'level_id': level.level_id})
     return jsonify(returned_dict), 200
 
-
+# 在借书时，要输入读者的读者账号来确定是哪个读者（接口作用）
 @auth.route('/getUserByUsername/<string:username>', methods=['GET'])
 def get_user_by_username(username):
     try:

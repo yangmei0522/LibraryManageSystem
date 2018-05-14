@@ -14,7 +14,8 @@ from random import randint, sample
 import datetime
 import json
 
-
+# 每个返回书籍信息的接口都需要把书籍信息填充到json里，
+# 如果在每个函数里都写会重复，所以就提取出来做一个函数
 def fill_book_info_to_dict(book, book_dict):
     """
     若标明了返回的格式是书籍常规格式，则返回如下格式的json数据
@@ -45,7 +46,7 @@ def fill_book_info_to_dict(book, book_dict):
     book_dict['call_number'] = book.call_number
     book_dict['image'] = book.image
 
-
+# 根据分页来返回书籍数据
 @book.route('/getBooks/<int:page>', methods=['GET'])
 def get_books(page):
     per_page = current_app.config['MANAGE_BOOK_PER_PAGE']
@@ -64,7 +65,7 @@ def get_books(page):
     returned_json['books'] = books_list
     return jsonify(returned_json), 200
 
-
+# 将page参数设为1转发请求给第一个函数
 @book.route('/getBooks', methods=['GET'])
 def get_first_page_books():
     return redirect(url_for('book.get_books', page=1))
@@ -457,7 +458,7 @@ def create_new_book():
 
     return jsonify({'created': True, 'created_book': returned_book, 'url': url_for('admin.manage_book')}), 201
 
-
+# 删除图书
 @book.route('/deleteBook/<int:book_id>', methods=['GET'])
 def delete_book(book_id):
     book = db.session.query(Book).filter_by(book_id=book_id).first()
@@ -473,7 +474,7 @@ def delete_book(book_id):
     else:
         return jsonify({'deleted': True}), 200
 
-
+# 修改图书信息
 @book.route('/editBook', methods=['POST'])
 def edit_book():
     request_json = request.get_json() or {}
@@ -600,7 +601,7 @@ def create_new_classification():
 
     return jsonify(returned_dict), 200
 
-
+# 创建新的图书藏本接口
 @book.route('/create_new_book_collection/<int:book_id>', methods=['POST'])
 def create_new_book_collection(book_id):
     """
@@ -633,7 +634,7 @@ def create_new_book_collection(book_id):
                         'campus': campus
                     }}), 201
 
-
+# 获取某本图书的所有藏本信息接口
 @book.route('/book_collections/<int:book_id>', methods=['GET'])
 def get_book_collections(book_id):
     """
@@ -669,7 +670,7 @@ def get_book_collections(book_id):
     return_json['book_collections'] = collection_json
     return jsonify(return_json), 200
 
-
+# 根据书籍id获取书籍藏本
 @book.route('/bookcollection/<int:bc_id>', methods=['GET'])
 def get_book_collection_by_id(bc_id):
     try:
@@ -685,7 +686,7 @@ def get_book_collection_by_id(bc_id):
                     'collection_address':book_collection.collection_address,
                     'statu':book_collection.statu}), 200
 
-
+# 修改藏本
 @book.route('/bookcollection', methods=['POST'])
 def edit_book_collection():
     try:
@@ -705,7 +706,7 @@ def edit_book_collection():
     else:
         return '修改成功', 201
 
-
+# 删除藏本
 @book.route('/deleteBookCollection/<int:bc_id>', methods=['GET'])
 def delete_book_collection(bc_id):
     try:
@@ -722,7 +723,7 @@ def delete_book_collection(bc_id):
     else:
         return '删除成功', 200
 
-
+# 获取某藏本的借阅记录信息接口
 @book.route('/lendinfo/<int:book_collection_id>', methods=['GET'])
 def get_lendinfo(book_collection_id):
     """
@@ -778,7 +779,7 @@ def get_comments(book_id):
     returned_json['comment_infos'] = comment_infos
     return jsonify(returned_json), 200
 
-
+# 借书管理
 @book.route('/borrow', methods=['POST'])
 def borrow_book():
     try:
@@ -812,7 +813,7 @@ def borrow_book():
     else:
         return jsonify({'reason': '借阅成功'}), 201
 
-
+# 还书管理
 @book.route('/return', methods=['POST'])
 def return_book():
     try:
@@ -835,7 +836,7 @@ def return_book():
         print(e)
         return jsonify({'reason': '服务器发生错误，请稍后再试'}), 500
 
-
+# 获取书籍所有最高级分类
 @book.route('/getClassifications', methods=['GET'])
 def get_classifications():
     classifications = db.session.query(Classification).filter_by(upper_layer_id=None).all()
@@ -849,7 +850,7 @@ def get_classifications():
     returned_json['classifications'] = classifications_list
     return jsonify(returned_json), 200
 
-
+# 图书添加分类时，根据发过来的类别id返回这个类别的子类别
 @book.route('/getClassifications/<int:upper_id>', methods=['GET'])
 def get_classifications_by_id(upper_id):
     classifications = db.session.query(Classification).filter_by(upper_layer_id=upper_id).all()
@@ -863,7 +864,7 @@ def get_classifications_by_id(upper_id):
     returned_json['classifications'] = classifications_list
     return jsonify(returned_json), 200
 
-
+# 借书信息
 @book.route('/getBookBorrowInfo/<int:book_id>', methods=['GET'])
 def get_book_borrow_info(book_id):
     book_collections = db.session.query(Book).filter_by(book_id=book_id).first().book_collections
@@ -881,7 +882,7 @@ def get_book_borrow_info(book_id):
     return_dict['lendinfos'] = return_list
     return jsonify(return_dict), 200
 
-
+# 获取书籍简介
 @book.route('/getBookDoubanInfo/<string:isbn>', methods=['GET'])
 def get_book_douban_info(isbn):
     try:
@@ -895,7 +896,7 @@ def get_book_douban_info(isbn):
     else:
         return jsonify(json.loads(response.text)), 200
 
-
+# 借书管理、还书管理搜索框
 @book.route('/getNameFullyCompliantBooks/<string:name>', methods=['GET'])
 def get_books_by_fully_compliant_name(name):
     books = db.session.query(Book).filter((Book.name.ilike('%' + name + '%'))).all()
@@ -909,7 +910,7 @@ def get_books_by_fully_compliant_name(name):
     returned_json['length'] = len(books)
     return jsonify(returned_json), 200
 
-
+# 还书管理中的借书信息列表
 @book.route('/getLendingInfos', methods=['GET'])
 def get_lending_infos():
     try:
@@ -953,7 +954,7 @@ def get_lending_infos():
         print(e)
         return jsonify({'reason': '服务器发生错误，请稍后再试'}), 500
 
-
+# 所有借阅信息
 @book.route('/getAllLendingInfos', methods=['GET'])
 def get_all_lending_infos():
     try:
@@ -999,7 +1000,7 @@ def get_all_lending_infos():
         print(e)
         return jsonify({'reason': '服务器发生错误，请稍后再试'}), 500
 
-
+# 图书续借
 @book.route('/renew/<int:lending_info_id>', methods=['GET'])
 def renew_borrow(lending_info_id):
     lending_info = db.session.query(LendingInfo).filter_by(lending_info_id=lending_info_id).first()
@@ -1009,7 +1010,7 @@ def renew_borrow(lending_info_id):
     db.session.commit()
     return '续借成功', 200
 
-
+# 首页随机显示10本书籍
 @book.route('/getRandomBooks/<int:nums>')
 def get_random_num_books(nums):
     book_ids = [id_tuple[0] for id_tuple in db.session.query(Book.book_id).all()]
